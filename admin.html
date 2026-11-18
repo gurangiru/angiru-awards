@@ -102,7 +102,7 @@
       setStatus("Solicitando seu link de acesso…");
       const { error } = await client.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: REDIRECT_URL }
+        options: { emailRedirectTo: REDIRECT_URL, shouldCreateUser: false }
       });
       if (error) {
         setStatus("Não foi possível enviar o link: " + error.message, "error");
