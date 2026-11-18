@@ -30,6 +30,18 @@
     .candidate h3{margin:0 0 5px;font-size:1rem}
     .candidate p{margin:0;color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
     .candidate a{color:var(--pink);text-decoration:none}
+    .nomination-panel{max-width:760px;margin:0 auto;padding:22px;background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px}
+    .nomination-panel label{display:block;margin:12px 0 6px;font-weight:700}
+    .nomination-panel input{width:100%;padding:12px 14px;border:1px solid #51445f;border-radius:11px;background:#100e18;color:#fff;font:inherit}
+    .nomination-panel button{padding:12px 16px;border:0;border-radius:11px;background:linear-gradient(100deg,var(--pink),#c49af8);color:#24162d;font:inherit;font-weight:800;cursor:pointer}
+    .nomination-panel button:disabled{opacity:.55}
+    .nomination-form-card{padding:15px 0;border-bottom:1px solid var(--line)}
+    .nomination-form-card:last-child{border-bottom:0}
+    .nomination-form-card h3{margin:0 0 8px}
+    .nomination-status{padding:12px;margin-top:12px;border-radius:10px;background:#ffffff0b;color:var(--muted);overflow-wrap:anywhere}
+    .nomination-status.error{color:#ffb4bd}.nomination-status.success{color:#b9f0cb}
+    .nomination-hint{font-size:.9rem;color:var(--muted);margin:6px 0 0}
+
     .emoji{font-size:1.8rem;display:block;margin-bottom:10px}
     .category h3{margin:0 0 5px;font-size:1.08rem}
     .category p{margin:0;color:var(--muted);font-size:.92rem}
@@ -64,6 +76,22 @@
         <article class="category"><span class="emoji">🌪️</span><h3>Maior criador de caos</h3><p>Onde essa pessoa chega, alguma coisa acontece!</p></article>
       </div>
     </section>
+    <section id="nomination-area">
+      <div class="section-head"><h2>Indique quem faz parte da nossa história</h2><p>Use seu código individual para indicar membros do Putoverso. Você pode preencher apenas as categorias que desejar.</p></div>
+      <div class="nomination-panel">
+        <div id="nomination-access">
+          <label for="nomination-code">Seu código individual de indicação</label>
+          <input id="nomination-code" type="password" autocomplete="off" placeholder="Cole aqui seu código recebido por mensagem">
+          <p class="nomination-hint">Seu código é pessoal. Não compartilhe com outras pessoas.</p>
+          <button id="load-nomination-form" type="button" style="margin-top:14px;width:100%">Acessar formulário</button>
+        </div>
+        <form id="nomination-form" class="hidden">
+          <div id="nomination-fields"></div>
+          <button id="submit-nominations" type="submit" style="width:100%;margin-top:18px">Salvar minhas indicações</button>
+        </form>
+        <div id="nomination-status" class="nomination-status" role="status" aria-live="polite">A fase de indicações está fechada no momento.</div>
+      </div>
+    </section>
     <section id="official-nominees" class="hidden">
       <div class="section-head"><h2>Candidatos oficiais</h2><p>Conheça os membros indicados e aprovados pela organização em cada categoria.</p></div>
       <div id="official-nominees-grid" class="grid"></div>
@@ -84,6 +112,114 @@
   <footer><div class="wrap">Angiru Awards · Feito para celebrar quem faz parte da comunidade. ✨<br><a href="./admin.html" style="color:#f18ab8;text-decoration:none">Acesso da organização</a></div></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    (function nominationExperience(){
+      const access = document.getElementById("nomination-access");
+      const codeInput = document.getElementById("nomination-code");
+      const form = document.getElementById("nomination-form");
+      const fields = document.getElementById("nomination-fields");
+      const status = document.getElementById("nomination-status");
+      const loadButton = document.getElementById("load-nomination-form");
+      const submitButton = document.getElementById("submit-nominations");
+      let categories = [];
+      let code = "";
+
+      function setMessage(message, type) {
+        status.textContent = message;
+        status.className = "nomination-status" + (type ? " " + type : "");
+      }
+      function makeField(tag, text) {
+        const node = document.createElement(tag);
+        node.textContent = text;
+        return node;
+      }
+      async function loadForm() {
+        code = codeInput.value.trim();
+        if (code.length < 20) { setMessage("Confira o código informado e tente novamente.", "error"); return; }
+        loadButton.disabled = true;
+        setMessage("Verificando seu código…");
+        try {
+          const [categoryResult, previousResult] = await Promise.all([
+            nominationClient.from("award_categories").select("id,slug,name,description,sort_order,is_nominations_open").order("sort_order"),
+            nominationClient.rpc("get_my_award_nominations", {p_code:code})
+          ]);
+          if (previousResult.error) throw previousResult.error;
+          if (categoryResult.error) throw categoryResult.error;
+          categories = (categoryResult.data || []).filter(c => c.is_nominations_open);
+          if (!categories.length) {
+            setMessage("A fase de indicações está fechada no momento.", "");
+            return;
+          }
+          const previous = previousResult.data || [];
+          fields.replaceChildren();
+          categories.forEach(category => {
+            const saved = previous.find(n => n.category_slug === category.slug);
+            const card = document.createElement("div");
+            card.className = "nomination-form-card";
+            card.append(makeField("h3", category.name));
+            if (category.description) card.append(makeField("p", category.description));
+            const nameLabel = makeField("label", "Nome de exibição");
+            const nameInput = document.createElement("input");
+            nameInput.type = "text";
+            nameInput.maxLength = 100;
+            nameInput.required = false;
+            nameInput.autocomplete = "off";
+            nameInput.placeholder = "Nome como aparece na comunidade";
+            nameInput.value = saved ? saved.nominee_display_name : "";
+            nameInput.dataset.field = "name";
+            const nickLabel = makeField("label", "Nickname do Angiru");
+            const nickInput = document.createElement("input");
+            nickInput.type = "text";
+            nickInput.maxLength = 40;
+            nickInput.required = false;
+            nickInput.autocomplete = "off";
+            nickInput.placeholder = "Nickname do perfil";
+            nickInput.value = saved ? saved.nominee_nickname : "";
+            nickInput.dataset.field = "nickname";
+            card.append(nameLabel,nameInput,nickLabel,nickInput);
+            fields.append(card);
+          });
+          access.classList.add("hidden");
+          form.classList.remove("hidden");
+          setMessage("Código confirmado. Suas indicações anteriores foram carregadas quando existentes. Você pode preencher ou substituir cada categoria.", "success");
+        } catch (error) {
+          setMessage(error.message || "Não foi possível validar o código.", "error");
+        } finally {
+          loadButton.disabled = false;
+        }
+      }
+      const nominationClient = window.supabase.createClient(
+        "https://cnymotrqygsrnjouemxy.supabase.co",
+        "sb_publishable_U5_Xyvm-dGZHA6U4jYbMKw_XdaMsjVc"
+      );
+      loadButton.addEventListener("click", loadForm);
+      form.addEventListener("submit", async event => {
+        event.preventDefault();
+        submitButton.disabled = true;
+        setMessage("Salvando suas indicações…");
+        try {
+          for (const category of categories) {
+            const card = Array.from(fields.children).find(node => node.querySelector("h3")?.textContent === category.name);
+            const name = card.querySelector('[data-field="name"]').value.trim();
+            const nickname = card.querySelector('[data-field="nickname"]').value.trim();
+            if (!name && !nickname) continue;
+            if (!name || !nickname) throw new Error("Preencha nome e nickname ou deixe os dois campos vazios em cada categoria.");
+            const {error} = await nominationClient.rpc("submit_award_nomination", {
+              p_code:code,
+              p_category_slug:category.slug,
+              p_nominee_display_name:name,
+              p_nominee_nickname:nickname
+            });
+            if (error) throw error;
+          }
+          setMessage("Indicações salvas! Você pode voltar com o mesmo código para editar ou substituir suas escolhas enquanto a fase estiver aberta.", "success");
+        } catch (error) {
+          setMessage(error.message || "Não foi possível salvar as indicações.", "error");
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+    })();
+
     (async function loadOfficialNominees(){
       const section = document.getElementById("official-nominees");
       const grid = document.getElementById("official-nominees-grid");
