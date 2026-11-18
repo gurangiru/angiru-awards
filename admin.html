@@ -123,8 +123,13 @@
       show("login");
       setStatus("Use o endereço autorizado da organização.");
     });
+    // Do not call Supabase RPCs directly inside onAuthStateChange.
+    // Supabase Auth holds an internal lock during this callback; defer the
+    // authorization check until the callback has returned.
     client.auth.onAuthStateChange((_event, session) => {
-      checkAccess(session);
+      window.setTimeout(() => {
+        checkAccess(session);
+      }, 0);
     });
     client.auth.getSession().then(({ data: { session } }) => checkAccess(session));
   </script>
