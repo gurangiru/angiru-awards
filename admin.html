@@ -203,6 +203,11 @@
     renderParticipants(data.participants || []);
     renderNominations(nominations, categories);
     renderNominees(data.nominees || []);
+    const pendingReviews = nominations.filter(n => n.review_status === "pending").length;
+    const nominationsClosed = !categories.some(c => c.is_nominations_open);
+    const unpublishedNominees = (data.nominees || []).filter(n => n.is_active && !n.is_published).length;
+    const publishButton = document.getElementById("publish-nominees-button");
+    publishButton.disabled = !nominationsClosed || pendingReviews > 0 || unpublishedNominees === 0;
     renderCategories(categories);
   }
   function metric(label, value) {
