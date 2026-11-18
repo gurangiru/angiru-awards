@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171321">
+  <title>Angiru Awards — Quem é quem no Angiru?</title>
+  <style>
+    :root{color-scheme:dark;--bg:#100e18;--panel:#1b1727;--panel2:#241d32;--pink:#f18ab8;--purple:#a78bfa;--gold:#f5cf83;--muted:#b8aec7;--line:#393047}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(ellipse at 50% -15%,#39264b 0,transparent 48%),var(--bg);color:#fff;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    .wrap{width:min(1080px,calc(100% - 36px));margin:auto}
+    header{padding:22px 0;border-bottom:1px solid #ffffff16}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.04em}
+    .brand-mark{display:grid;place-items:center;width:39px;height:39px;border-radius:13px;background:linear-gradient(135deg,var(--pink),var(--purple));color:#21162c;font-size:22px}
+    .hero{text-align:center;padding:76px 0 58px}
+    .eyebrow{color:var(--gold);text-transform:uppercase;letter-spacing:.18em;font-size:.76rem;font-weight:800}
+    h1{font-size:clamp(2.35rem,7vw,4.8rem);line-height:1.05;letter-spacing:-.045em;margin:17px auto;max-width:850px}
+    h1 span{background:linear-gradient(90deg,var(--pink),#d8a8ff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .intro{max-width:650px;margin:0 auto;color:var(--muted);font-size:1.08rem}
+    .notice{display:inline-flex;align-items:center;gap:9px;margin-top:28px;padding:10px 16px;border:1px solid #f5cf8355;border-radius:999px;background:#f5cf8310;color:#f6dda9;font-size:.9rem}
+    section{padding:28px 0 54px}
+    .section-head{text-align:center;margin-bottom:26px}
+    h2{font-size:clamp(1.55rem,4vw,2.2rem);margin:0 0 7px}
+    .section-head p,.muted{color:var(--muted);margin:0}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+    .category{background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:21px;min-height:150px}
+    .emoji{font-size:1.8rem;display:block;margin-bottom:10px}
+    .category h3{margin:0 0 5px;font-size:1.08rem}
+    .category p{margin:0;color:var(--muted);font-size:.92rem}
+    .how{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .step{padding:20px;border-left:2px solid var(--purple);background:#ffffff06;border-radius:0 14px 14px 0}
+    .step b{display:block;color:var(--pink);margin-bottom:5px}
+    .privacy{margin:12px 0 60px;padding:25px;border:1px solid #a78bfa55;border-radius:18px;background:linear-gradient(120deg,#a78bfa13,#f18ab80b)}
+    .privacy h2{font-size:1.35rem}
+    .privacy p{color:var(--muted);margin:8px 0 0}
+    footer{border-top:1px solid #ffffff16;padding:24px 0 34px;color:var(--muted);text-align:center;font-size:.88rem}
+    @media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.how{grid-template-columns:1fr}.hero{padding:58px 0 44px}}
+    @media(max-width:430px){.grid{grid-template-columns:1fr}.category{min-height:0}}
+  </style>
+</head>
+<body>
+  <header><div class="wrap brand"><span class="brand-mark">✦</span><span>ANGIRU AWARDS</span></div></header>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Uma celebração da nossa comunidade</div>
+      <h1>Quem é quem <span>no Angiru?</span></h1>
+      <p class="intro">Chegou a hora de celebrar as personalidades, as histórias e aquelas figuras inesquecíveis que dão vida à comunidade!</p>
+      <div class="notice">✧ Prévia do projeto · votação ainda não aberta</div>
+    </section>
+    <section>
+      <div class="section-head"><h2>As categorias</h2><p>Algumas das categorias que vão animar a premiação.</p></div>
+      <div class="grid">
+        <article class="category"><span class="emoji">😂</span><h3>Mais engraçado</h3><p>Quem sempre consegue arrancar boas risadas?</p></article>
+        <article class="category"><span class="emoji">🕵️</span><h3>Mais misterioso</h3><p>Aquela pessoa que guarda sempre um ar de mistério.</p></article>
+        <article class="category"><span class="emoji">👻</span><h3>Mais provável de sumir</h3><p>Some por um tempo e reaparece como se nada tivesse acontecido.</p></article>
+        <article class="category"><span class="emoji">🎭</span><h3>Rei ou rainha do drama</h3><p>Uma entrada triunfal nunca é demais.</p></article>
+        <article class="category"><span class="emoji">💖</span><h3>Melhor companhia</h3><p>Quem faz qualquer conversa ficar melhor?</p></article>
+        <article class="category"><span class="emoji">🌪️</span><h3>Maior criador de caos</h3><p>Onde essa pessoa chega, alguma coisa acontece!</p></article>
+      </div>
+    </section>
+    <section>
+      <div class="section-head"><h2>Como vai funcionar?</h2><p>Simples, divertido e com privacidade.</p></div>
+      <div class="how">
+        <div class="step"><b>01 · Indique</b>Escolha um membro da comunidade em cada categoria.</div>
+        <div class="step"><b>02 · Vote</b>O sistema identificará a participação para evitar votos repetidos, sem expor suas escolhas.</div>
+        <div class="step"><b>03 · Descubra</b>Depois da apuração, os vencedores serão revelados no mural da premiação.</div>
+      </div>
+    </section>
+    <aside class="privacy">
+      <h2>🔒 Seu voto, sua privacidade</h2>
+      <p>A proposta é permitir apenas uma participação por pessoa em cada categoria. A identificação será usada para controlar votos duplicados; as escolhas individuais não serão exibidas publicamente.</p>
+    </aside>
+  </main>
+  <footer><div class="wrap">Angiru Awards · Feito para celebrar quem faz parte da comunidade. ✨</div></footer>
+</body>
+</html>
