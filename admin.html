@@ -86,14 +86,23 @@
     </section>
 
     <section class="card">
-      <h2>Códigos individuais de indicação</h2>
-      <p class="intro" style="text-align:left;margin-bottom:12px">Crie um código para cada participante. O código completo aparece uma única vez; copie e entregue por mensagem privada.</p>
-      <form id="code-form">
-        <label for="participant-label">Identificação do participante</label>
-        <input id="participant-label" maxlength="100" placeholder="Ex.: apelido ou nome para controle" required>
-        <button id="create-code-button" class="full" type="submit">Gerar código individual</button>
+      <h2>Cadastro de participantes elegíveis</h2>
+      <p class="intro" style="text-align:left;margin-bottom:12px">Cadastre somente membros do Putoverso. O nome de exibição será usado nos registros; o nickname identifica o perfil no Angiru. Cada nickname poderá ser cadastrado uma única vez.</p>
+      <form id="participant-form">
+        <label for="participant-display-name">Nome de exibição</label>
+        <input id="participant-display-name" maxlength="100" placeholder="Ex.: Vamp Mavis Drácula 🦇" required>
+        <label for="participant-nickname">Nickname do Angiru</label>
+        <input id="participant-nickname" maxlength="100" placeholder="Ex.: mavisvamp" required>
+        <button id="create-participant-button" class="full" type="submit">Cadastrar participante</button>
       </form>
+      <div id="participant-status" class="status" role="status" aria-live="polite">O cadastro não abre as indicações. Você poderá gerar o código individual de cada pessoa depois.</div>
+      <div id="participants-list"></div>
       <div id="new-code" class="code-reveal hidden" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h2>Códigos individuais de indicação</h2>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Os códigos ficam vinculados ao cadastro do participante. O código completo só aparece no momento da criação ou reemissão.</p>
       <div id="codes-list"></div>
     </section>
 
@@ -182,6 +191,7 @@
     phasePill.className = "pill " + (isOpen ? "open" : "closed");
     document.getElementById("phase-button").textContent = isOpen ? "Fechar fase de indicações" : "Abrir fase de indicações";
     renderCodes(codes);
+    renderParticipants(data.participants || []);
     renderNominations(nominations);
     renderCategories(categories);
   }
@@ -210,6 +220,68 @@
       }
       root.append(item);
     });
+  }
+  function renderParticipants(participants) {
+    const root = document.getElementById("participants-list");
+    root.replaceChildren(el("h3", "", "Participantes cadastrados"));
+    if (!participants.length) { root.append(el("p", "empty", "Nenhum participante cadastrado ainda.")); return; }
+    participants.forEach(p => {
+      const item = el("div", "rowitem");
+      const state = el("span", "pill " + (p.is_active ? "open" : "closed"), p.is_active ? "Elegível" : "Inativo");
+      item.append(el("strong", "", p.display_name), document.createTextNode(" "), state);
+      item.append(el("p", "", "Nickname: " + p.nickname));
+      item.append(el("p", "", "Perfil: angiru.com.py/profiles/" + p.nickname + "/"));
+      const actions = el("div", "actions");
+      if (p.is_active) {
+        const issue = el("button", "secondary", p.has_nomination_code ? "Reemitir código (invalida o anterior)" : "Gerar código de indicação");
+        issue.type = "button";
+        issue.addEventListener("click", () => issueParticipantCode(p, issue));
+        actions.append(issue);
+      }
+      const toggle = el("button", p.is_active ? "danger" : "secondary", p.is_active ? "Marcar como inelegível" : "Reativar participante");
+      toggle.type = "button";
+      toggle.addEventListener("click", () => setParticipantActive(p.id, !p.is_active, toggle));
+      actions.append(toggle);
+      item.append(actions);
+      root.append(item);
+    });
+  }
+  async function issueParticipantCode(participant, button) {
+    const existing = participant.has_nomination_code;
+    if (existing && !window.confirm("Reemitir o código de " + participant.display_name + "? O código anterior deixará de funcionar.")) return;
+    if (!existing && !window.confirm("Gerar o código individual de " + participant.display_name + "?")) return;
+    button.disabled = true;
+    const code = makeCode();
+    const { data, error } = await client.rpc("admin_issue_participant_nomination_code", {p_participant_id:participant.id,p_code:code});
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("participant-status"), "Não foi possível gerar o código: " + error.message, "error");
+      return;
+    }
+    const reveal = document.getElementById("new-code");
+    reveal.replaceChildren(el("strong", "", "Código criado para " + data.label), el("code", "", code), el("p", "", "Copie agora e envie em mensagem privada. O código anterior, se existia, foi invalidado. Por segurança, este código não será mostrado novamente."));
+    const copy = el("button", "secondary", "Copiar código");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(code); copy.textContent = "Copiado!"; }
+      catch { copy.textContent = "Selecione e copie o código acima"; }
+    });
+    reveal.append(copy);
+    reveal.classList.remove("hidden");
+    setStatus(document.getElementById("participant-status"), "Código individual gerado. Lembre-se de copiá-lo agora.", "success");
+    await loadDashboard();
+  }
+  async function setParticipantActive(id, active, button) {
+    const message = active ? "Reativar este participante?" : "Marcar este participante como inelegível? O código de indicação vinculado será desativado.";
+    if (!window.confirm(message)) return;
+    button.disabled = true;
+    const { error } = await client.rpc("admin_set_award_participant_active", {p_participant_id:id,p_active:active});
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("participant-status"), "Não foi possível atualizar o participante: " + error.message, "error");
+      return;
+    }
+    await loadDashboard();
   }
   function renderNominations(nominations) {
     const root = document.getElementById("nominations-list");
@@ -264,27 +336,20 @@
     if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível alterar a fase: " + error.message, "error"); return; }
     await loadDashboard();
   });
-  document.getElementById("code-form").addEventListener("submit", async event => {
+  document.getElementById("participant-form").addEventListener("submit", async event => {
     event.preventDefault();
-    const label = document.getElementById("participant-label").value.trim();
-    if (!label) return;
-    const button = document.getElementById("create-code-button");
+    const displayName = document.getElementById("participant-display-name").value.trim();
+    const nickname = document.getElementById("participant-nickname").value.trim();
+    const button = document.getElementById("create-participant-button");
     button.disabled = true;
-    const code = makeCode();
-    const { data, error } = await client.rpc("admin_create_nomination_code", {p_code:code,p_label:label});
+    const { error } = await client.rpc("admin_create_award_participant", {p_display_name:displayName,p_nickname:nickname});
     button.disabled = false;
-    if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível criar o código: " + error.message, "error"); return; }
-    const reveal = document.getElementById("new-code");
-    reveal.replaceChildren(el("strong", "", "Código criado para " + data.label), el("code", "", code), el("p", "", "Copie agora e envie em mensagem privada. Por segurança, ele não será mostrado novamente."));
-    const copy = el("button", "secondary", "Copiar código");
-    copy.type = "button";
-    copy.addEventListener("click", async () => {
-      try { await navigator.clipboard.writeText(code); copy.textContent = "Copiado!"; }
-      catch { copy.textContent = "Selecione e copie o código acima"; }
-    });
-    reveal.append(copy);
-    reveal.classList.remove("hidden");
-    document.getElementById("participant-label").value = "";
+    if (error) {
+      setStatus(document.getElementById("participant-status"), "Não foi possível cadastrar: " + error.message, "error");
+      return;
+    }
+    document.getElementById("participant-form").reset();
+    setStatus(document.getElementById("participant-status"), "Participante cadastrado com sucesso.", "success");
     await loadDashboard();
   });
   async function setCodeActive(id, active, button) {
