@@ -107,9 +107,18 @@
     </section>
 
     <section class="card">
-      <div class="topline"><h2>Indicações recebidas</h2><button id="refresh-button" class="secondary" type="button">Atualizar</button></div>
-      <p class="intro" style="text-align:left;margin-bottom:8px">Lista privada, visível somente à administração. As indicações podem ser revisadas após o encerramento da fase.</p>
+      <div class="topline"><h2>Revisão de indicações</h2><button id="refresh-button" class="secondary" type="button">Atualizar</button></div>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Lista privada. Depois de fechar a fase, aprove as indicações válidas ou rejeite as que não devem seguir para a lista oficial. Cada decisão é individual.</p>
+      <div id="review-summary" class="status">Carregando revisão…</div>
       <div id="nominations-list"><p class="empty">Carregando…</p></div>
+    </section>
+
+    <section class="card">
+      <div class="topline"><h2>Candidatos oficiais</h2><span id="publication-pill" class="pill closed">Ainda não publicados</span></div>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Os nomes aprovados ficam em rascunho até você publicar. A publicação só é permitida quando as indicações estiverem fechadas e todas tiverem sido revisadas.</p>
+      <div id="nominees-list"></div>
+      <button id="publish-nominees-button" class="full" type="button">Publicar lista oficial de candidatos</button>
+      <div id="publication-status" class="status" role="status" aria-live="polite">A lista ainda não foi publicada.</div>
     </section>
 
     <section class="card">
@@ -192,7 +201,8 @@
     document.getElementById("phase-button").textContent = isOpen ? "Fechar fase de indicações" : "Abrir fase de indicações";
     renderCodes(codes);
     renderParticipants(data.participants || []);
-    renderNominations(nominations);
+    renderNominations(nominations, categories);
+    renderNominees(data.nominees || []);
     renderCategories(categories);
   }
   function metric(label, value) {
@@ -283,15 +293,74 @@
     }
     await loadDashboard();
   }
-  function renderNominations(nominations) {
+  function renderNominations(nominations, categories) {
     const root = document.getElementById("nominations-list");
     root.replaceChildren();
+    const pending = nominations.filter(n => n.review_status === "pending");
+    const approved = nominations.filter(n => n.review_status === "approved");
+    const rejected = nominations.filter(n => n.review_status === "rejected");
+    const phaseClosed = !categories.some(c => c.is_nominations_open);
+    setStatus(document.getElementById("review-summary"),
+      pending.length + " pendente(s) · " + approved.length + " aprovada(s) · " + rejected.length + " rejeitada(s)" +
+      (phaseClosed ? " · fase fechada" : " · feche a fase para revisar"),
+      pending.length && phaseClosed ? "" : "success");
     if (!nominations.length) { root.append(el("p", "empty", "Ainda não há indicações recebidas.")); return; }
     nominations.forEach(n => {
       const item = el("div", "rowitem");
+      const statusLabel = n.review_status === "approved" ? "Aprovada" : n.review_status === "rejected" ? "Rejeitada" : "Pendente";
+      const statusClass = n.review_status === "approved" ? "open" : n.review_status === "rejected" ? "closed" : "";
       item.append(el("strong", "", n.category_name + " · " + n.nominee_display_name));
-      item.append(el("p", "", "Perfil: " + n.nominee_nickname + " · Participante: " + (n.participant_label || "Não identificado")));
+      item.append(document.createTextNode(" "));
+      item.append(el("span", "pill " + statusClass, statusLabel));
+      item.append(el("p", "", "Perfil indicado: " + n.nominee_nickname));
+      item.append(el("p", "", "Indicado por: " + (n.participant_label || "Participante não identificado") + (n.participant_nickname ? " · @" + n.participant_nickname : "")));
       item.append(el("p", "", "Enviada: " + new Date(n.created_at).toLocaleString("pt-BR") + (n.updated_at !== n.created_at ? " · Editada: " + new Date(n.updated_at).toLocaleString("pt-BR") : "")));
+      if (n.review_note) item.append(el("p", "", "Observação: " + n.review_note));
+      if (n.review_status === "pending" && phaseClosed) {
+        const actions = el("div", "actions");
+        const approve = el("button", "secondary", "Aprovar");
+        approve.type = "button";
+        approve.addEventListener("click", () => reviewNomination(n, "approved", approve));
+        const reject = el("button", "danger", "Rejeitar");
+        reject.type = "button";
+        reject.addEventListener("click", () => reviewNomination(n, "rejected", reject));
+        actions.append(approve, reject);
+        item.append(actions);
+      }
+      root.append(item);
+    });
+  }
+  async function reviewNomination(nomination, decision, button) {
+    const verb = decision === "approved" ? "aprovar" : "rejeitar";
+    if (!window.confirm("Deseja " + verb + " a indicação de " + nomination.nominee_display_name + " em " + nomination.category_name + "?")) return;
+    button.disabled = true;
+    const { error } = await client.rpc("admin_review_award_nomination", {
+      p_nomination_id: nomination.id, p_decision: decision, p_note: null
+    });
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("review-summary"), "Não foi possível registrar a revisão: " + error.message, "error");
+      return;
+    }
+    await loadDashboard();
+  }
+  function renderNominees(nominees) {
+    const root = document.getElementById("nominees-list");
+    root.replaceChildren();
+    if (!nominees.length) {
+      root.append(el("p", "empty", "Nenhum candidato aprovado ainda."));
+      document.getElementById("publication-pill").textContent = "Ainda não publicados";
+      document.getElementById("publication-pill").className = "pill closed";
+      return;
+    }
+    const published = nominees.filter(n => n.is_published).length;
+    document.getElementById("publication-pill").textContent = published === nominees.length ? "Lista publicada" : published + " de " + nominees.length + " publicados";
+    document.getElementById("publication-pill").className = "pill " + (published === nominees.length ? "open" : "closed");
+    nominees.forEach(n => {
+      const item = el("div", "rowitem");
+      item.append(el("strong", "", n.category_name + " · " + n.display_name));
+      item.append(el("p", "", "Perfil: " + n.nickname));
+      item.append(el("p", "", n.is_published ? "Publicado" : "Aguardando publicação"));
       root.append(item);
     });
   }
@@ -359,6 +428,19 @@
     if (error) { button.disabled = false; setStatus(document.getElementById("dashboard-status"), "Não foi possível desativar o código: " + error.message, "error"); return; }
     await loadDashboard();
   }
+  document.getElementById("publish-nominees-button").addEventListener("click", async event => {
+    const button = event.currentTarget;
+    if (!window.confirm("Publicar agora todos os candidatos aprovados? Eles passarão a ficar visíveis na lista pública de candidatos.")) return;
+    button.disabled = true;
+    const { data, error } = await client.rpc("admin_publish_award_nominees");
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("publication-status"), "Não foi possível publicar: " + error.message, "error");
+      return;
+    }
+    setStatus(document.getElementById("publication-status"), data + " candidato(s) publicado(s).", "success");
+    await loadDashboard();
+  });
   document.getElementById("refresh-button").addEventListener("click", loadDashboard);
   document.getElementById("signout-button").addEventListener("click", async () => { await client.auth.signOut(); show("login"); setStatus(statusBox, "Você saiu da área administrativa."); });
   document.getElementById("denied-signout").addEventListener("click", async () => { await client.auth.signOut(); show("login"); setStatus(statusBox, "Use o endereço autorizado da organização."); });
