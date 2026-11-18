@@ -4,134 +4,301 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171321">
-  <title>Administração · Angiru Awards</title>
+  <title>Centro de comando · Angiru Awards</title>
   <style>
-    :root{color-scheme:dark;--bg:#100e18;--panel:#1b1727;--pink:#f18ab8;--purple:#a78bfa;--gold:#f5cf83;--muted:#b8aec7;--line:#393047}
+    :root{color-scheme:dark;--bg:#100e18;--panel:#1b1727;--panel2:#241d32;--pink:#f18ab8;--purple:#a78bfa;--gold:#f5cf83;--muted:#b8aec7;--line:#393047;--green:#b9f0cb;--red:#ffb4bd}
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% -15%,#39264b 0,transparent 48%),var(--bg);color:#fff;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-    main{width:min(100%,460px)}
-    .brand{text-align:center;color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin-bottom:18px}
-    .card{padding:clamp(23px,6vw,34px);border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#241d32,#1b1727);box-shadow:0 18px 60px #0005}
-    h1{font-size:1.8rem;line-height:1.2;margin:0 0 8px;text-align:center}
-    .intro{text-align:center;color:var(--muted);margin:0 0 25px}
-    label{display:block;font-weight:650;margin:0 0 7px}
-    input{width:100%;padding:14px 15px;border:1px solid #51445f;border-radius:12px;background:#100e18;color:#fff;font:inherit}
+    body{margin:0;min-height:100vh;padding:24px 16px 44px;background:radial-gradient(ellipse at 50% -15%,#39264b 0,transparent 48%),var(--bg);color:#fff;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+    main{width:min(100%,900px);margin:0 auto}
+    .brand{text-align:center;color:var(--gold);font-size:.78rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin:8px 0 18px}
+    .card{padding:clamp(19px,4vw,30px);border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#241d32,#1b1727);box-shadow:0 18px 60px #0005;margin:16px 0}
+    h1{font-size:clamp(1.7rem,5vw,2.3rem);line-height:1.2;margin:0 0 8px;text-align:center}
+    h2{font-size:1.2rem;margin:0 0 12px}
+    h3{font-size:1rem;margin:0 0 8px}
+    .intro{text-align:center;color:var(--muted);margin:0 0 22px}
+    label{display:block;font-weight:650;margin:12px 0 6px}
+    input{width:100%;padding:13px 14px;border:1px solid #51445f;border-radius:11px;background:#100e18;color:#fff;font:inherit}
     input:focus{outline:2px solid var(--purple);outline-offset:2px}
-    button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:linear-gradient(100deg,var(--pink),#c49af8);color:#24162d;font:inherit;font-weight:800;cursor:pointer}
-    button:disabled{opacity:.6;cursor:wait}
-    .status{min-height:48px;margin-top:17px;padding:11px 13px;border-radius:10px;background:#ffffff09;color:var(--muted);font-size:.92rem;overflow-wrap:anywhere}
-    .status.error{color:#ffb4bd;background:#ff526a12}
-    .status.success{color:#b9f0cb;background:#54c98212}
-    .back{display:block;text-align:center;margin-top:20px;color:var(--pink);text-decoration:none}
+    button{padding:12px 15px;border:0;border-radius:11px;background:linear-gradient(100deg,var(--pink),#c49af8);color:#24162d;font:inherit;font-weight:800;cursor:pointer}
+    button:disabled{opacity:.55;cursor:wait}
+    button.secondary{background:#393047;color:#fff;border:1px solid #51445f}
+    button.danger{background:#542b3b;color:#ffd8df;border:1px solid #82465b}
+    .full{width:100%;margin-top:14px}
+    .status{margin-top:15px;padding:12px 14px;border-radius:11px;background:#ffffff09;color:var(--muted);font-size:.94rem;overflow-wrap:anywhere}
+    .status.error{color:var(--red);background:#ff526a12}
+    .status.success{color:var(--green);background:#54c98212}
     .hidden{display:none!important}
-    .session-email{color:var(--gold);text-align:center;overflow-wrap:anywhere}
+    .session-email{color:var(--gold);text-align:center;overflow-wrap:anywhere;margin:4px 0 18px}
+    .topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .topline p{margin:0;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .mini{padding:15px;border:1px solid var(--line);border-radius:13px;background:#100e1870}
+    .mini strong{display:block;color:var(--gold);font-size:1.35rem}
+    .pill{display:inline-block;padding:4px 9px;border-radius:99px;background:#ffffff12;color:var(--muted);font-size:.82rem}
+    .pill.open{color:var(--green);background:#54c98218}
+    .pill.closed{color:#ffd5a0;background:#f5cf8318}
+    .rowitem{padding:13px 0;border-bottom:1px solid var(--line)}
+    .rowitem:last-child{border-bottom:0}
+    .rowitem p{margin:3px 0;color:var(--muted);font-size:.92rem;overflow-wrap:anywhere}
+    .rowitem .actions{margin-top:8px}
+    .code-reveal{padding:14px;border:1px dashed var(--gold);border-radius:12px;background:#f5cf830d;margin-top:14px}
+    .code-reveal code{display:block;font-size:1.1rem;letter-spacing:.08em;overflow-wrap:anywhere;color:var(--gold);margin:7px 0}
+    .empty{color:var(--muted);padding:12px 0}
+    .back{display:block;text-align:center;margin:22px 0;color:var(--pink);text-decoration:none}
+    @media(max-width:520px){body{padding:16px 12px 34px}.topline{align-items:flex-start}.topline button{width:100%}.card{border-radius:16px}}
   </style>
 </head>
 <body>
-  <main>
-    <div class="brand">✦ Angiru Awards ✦</div>
+<main>
+  <div class="brand">✦ Angiru Awards · Organização ✦</div>
+  <section class="card" id="login-card">
+    <div id="login-view">
+      <h1>Área administrativa</h1>
+      <p class="intro">Acesso reservado à organização do Angiru Awards.</p>
+      <form id="login-form">
+        <label for="email">Seu e-mail autorizado</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" required>
+        <button id="send-button" class="full" type="submit">Enviar link de acesso</button>
+      </form>
+      <div id="status" class="status" role="status" aria-live="polite">Você receberá um link de uso único para entrar. Somente endereços autorizados poderão acessar a administração.</div>
+    </div>
+    <div id="denied-view" class="hidden">
+      <h1>Acesso não autorizado</h1>
+      <p class="intro">Este endereço de e-mail não está autorizado a administrar a premiação.</p>
+      <button id="denied-signout" class="full" type="button">Voltar</button>
+    </div>
+  </section>
+
+  <section id="dashboard-view" class="hidden">
+    <div class="card">
+      <div class="topline">
+        <div><h1>Centro de comando ✨</h1><p id="signed-email" class="session-email"></p></div>
+        <button id="signout-button" class="secondary" type="button">Sair com segurança</button>
+      </div>
+      <div class="grid" id="summary"></div>
+      <div id="dashboard-status" class="status" role="status" aria-live="polite">Carregando dados…</div>
+    </div>
+
     <section class="card">
-      <div id="login-view">
-        <h1>Área administrativa</h1>
-        <p class="intro">Acesso reservado à organização do Angiru Awards.</p>
-        <form id="login-form">
-          <label for="email">Seu e-mail autorizado</label>
-          <input id="email" name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" required>
-          <button id="send-button" type="submit">Enviar link de acesso</button>
-        </form>
-        <div id="status" class="status" role="status" aria-live="polite">Você receberá um link de uso único para entrar. Somente endereços autorizados poderão acessar a administração.</div>
-      </div>
-      <div id="denied-view" class="hidden">
-        <h1>Acesso não autorizado</h1>
-        <p class="intro">Este endereço de e-mail não está autorizado a administrar a premiação.</p>
-        <button id="denied-signout" type="button">Voltar</button>
-      </div>
-      <div id="admin-view" class="hidden">
-        <h1>Você entrou! ✨</h1>
-        <p class="intro">Sessão administrativa autenticada.</p>
-        <p class="session-email" id="signed-email"></p>
-        <div class="status success">A autenticação foi confirmada. As ferramentas de organização serão adicionadas nesta área nas próximas etapas.</div>
-        <button id="signout-button" type="button">Sair com segurança</button>
-      </div>
+      <div class="topline"><h2>Fase de indicações</h2><span id="phase-pill" class="pill closed">Fechada</span></div>
+      <p class="intro" style="text-align:left;margin:0 0 12px">A abertura ou o fechamento vale para todas as seis categorias. Ao fechar, os participantes deixam de poder enviar ou editar indicações.</p>
+      <button id="phase-button" class="full" type="button">Abrir fase de indicações</button>
     </section>
-    <a class="back" href="./">← Voltar ao Angiru Awards</a>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const SUPABASE_URL = "https://cnymotrqygsrnjouemxy.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_U5_Xyvm-dGZHA6U4jYbMKw_XdaMsjVc";
-    const REDIRECT_URL = "https://msaiyan.github.io/angiru-awards/admin.html";
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const loginView = document.getElementById("login-view");
-    const adminView = document.getElementById("admin-view");
-    const deniedView = document.getElementById("denied-view");
-    const statusBox = document.getElementById("status");
-    const sendButton = document.getElementById("send-button");
 
-    function show(view) {
-      loginView.classList.toggle("hidden", view !== "login");
-      adminView.classList.toggle("hidden", view !== "admin");
-      deniedView.classList.toggle("hidden", view !== "denied");
-    }
-    function setStatus(message, kind = "") {
-      statusBox.textContent = message;
-      statusBox.className = "status" + (kind ? " " + kind : "");
-    }
-    async function checkAccess(session) {
-      if (!session) { show("login"); return; }
-      const { data, error } = await client.rpc("is_award_admin");
-      if (error) {
-        show("login");
-        setStatus("Não foi possível verificar a autorização. Tente novamente; se persistir, avise a organização. (" + error.message + ")", "error");
-        return;
-      }
-      if (data !== true) {
-        show("denied");
-        return;
-      }
-      document.getElementById("signed-email").textContent = session.user.email || "";
-      show("admin");
-    }
+    <section class="card">
+      <h2>Códigos individuais de indicação</h2>
+      <p class="intro" style="text-align:left;margin-bottom:12px">Crie um código para cada participante. O código completo aparece uma única vez; copie e entregue por mensagem privada.</p>
+      <form id="code-form">
+        <label for="participant-label">Identificação do participante</label>
+        <input id="participant-label" maxlength="100" placeholder="Ex.: apelido ou nome para controle" required>
+        <button id="create-code-button" class="full" type="submit">Gerar código individual</button>
+      </form>
+      <div id="new-code" class="code-reveal hidden" aria-live="polite"></div>
+      <div id="codes-list"></div>
+    </section>
 
-    document.getElementById("login-form").addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      if (!email) return;
-      sendButton.disabled = true;
-      sendButton.textContent = "Enviando…";
-      setStatus("Solicitando seu link de acesso…");
-      const { error } = await client.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: REDIRECT_URL, shouldCreateUser: false }
-      });
-      if (error) {
-        setStatus("Não foi possível enviar o link: " + error.message, "error");
-      } else {
-        setStatus("Solicitação enviada. Confira sua caixa de entrada e, se necessário, a pasta de spam. O link é pessoal e de uso único.", "success");
-      }
-      sendButton.disabled = false;
-      sendButton.textContent = "Enviar link de acesso";
-    });
+    <section class="card">
+      <div class="topline"><h2>Indicações recebidas</h2><button id="refresh-button" class="secondary" type="button">Atualizar</button></div>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Lista privada, visível somente à administração. As indicações podem ser revisadas após o encerramento da fase.</p>
+      <div id="nominations-list"><p class="empty">Carregando…</p></div>
+    </section>
 
-    document.getElementById("signout-button").addEventListener("click", async () => {
-      await client.auth.signOut();
+    <section class="card">
+      <h2>Categorias</h2>
+      <div id="categories-list"></div>
+    </section>
+  </section>
+  <a class="back" href="./">← Voltar ao Angiru Awards</a>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://cnymotrqygsrnjouemxy.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_U5_Xyvm-dGZHA6U4jYbMKw_XdaMsjVc";
+  const REDIRECT_URL = "https://msaiyan.github.io/angiru-awards/admin.html";
+  const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const loginCard = document.getElementById("login-card");
+  const loginView = document.getElementById("login-view");
+  const deniedView = document.getElementById("denied-view");
+  const dashboardView = document.getElementById("dashboard-view");
+  const statusBox = document.getElementById("status");
+  const sendButton = document.getElementById("send-button");
+  let dashboardData = null;
+
+  function show(view) {
+    loginCard.classList.toggle("hidden", view === "dashboard");
+    loginView.classList.toggle("hidden", view !== "login");
+    deniedView.classList.toggle("hidden", view !== "denied");
+    dashboardView.classList.toggle("hidden", view !== "dashboard");
+  }
+  function setStatus(element, message, kind) {
+    element.textContent = message;
+    element.className = "status" + (kind ? " " + kind : "");
+  }
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  async function checkAccess(session) {
+    if (!session) { show("login"); return; }
+    const { data, error } = await client.rpc("is_award_admin");
+    if (error) {
       show("login");
-      setStatus("Você saiu da área administrativa.");
+      setStatus(statusBox, "Não foi possível verificar a autorização. " + error.message, "error");
+      return;
+    }
+    if (data !== true) { show("denied"); return; }
+    document.getElementById("signed-email").textContent = session.user.email || "";
+    show("dashboard");
+    await loadDashboard();
+  }
+  async function loadDashboard() {
+    const box = document.getElementById("dashboard-status");
+    setStatus(box, "Atualizando informações…");
+    const { data, error } = await client.rpc("admin_get_dashboard");
+    if (error) {
+      setStatus(box, "Não foi possível carregar o painel: " + error.message, "error");
+      return;
+    }
+    dashboardData = data;
+    renderDashboard(data);
+    setStatus(box, "Dados atualizados.", "success");
+  }
+  function renderDashboard(data) {
+    const categories = data.categories || [];
+    const nominations = data.nominations || [];
+    const codes = data.nomination_codes || [];
+    const isOpen = categories.some(c => c.is_nominations_open);
+    const activeCodes = codes.filter(c => c.is_active).length;
+    document.getElementById("summary").replaceChildren(
+      metric("Categorias", categories.length),
+      metric("Indicações recebidas", nominations.length),
+      metric("Códigos ativos", activeCodes)
+    );
+    const phasePill = document.getElementById("phase-pill");
+    phasePill.textContent = isOpen ? "Aberta" : "Fechada";
+    phasePill.className = "pill " + (isOpen ? "open" : "closed");
+    document.getElementById("phase-button").textContent = isOpen ? "Fechar fase de indicações" : "Abrir fase de indicações";
+    renderCodes(codes);
+    renderNominations(nominations);
+    renderCategories(categories);
+  }
+  function metric(label, value) {
+    const box = el("div", "mini");
+    box.append(el("span", "", label), el("strong", "", String(value)));
+    return box;
+  }
+  function renderCodes(codes) {
+    const root = document.getElementById("codes-list");
+    root.replaceChildren(el("h3", "", "Códigos cadastrados"));
+    if (!codes.length) { root.append(el("p", "empty", "Nenhum código criado ainda.")); return; }
+    codes.forEach(code => {
+      const item = el("div", "rowitem");
+      const title = el("strong", "", code.label || "Participante sem identificação");
+      const state = el("span", "pill " + (code.is_active ? "open" : "closed"), code.is_active ? "Ativo" : "Desativado");
+      item.append(title, document.createTextNode(" "), state);
+      item.append(el("p", "", "Criado em " + new Date(code.created_at).toLocaleString("pt-BR")));
+      if (code.is_active) {
+        const actions = el("div", "actions");
+        const btn = el("button", "danger", "Desativar código");
+        btn.type = "button";
+        btn.addEventListener("click", () => setCodeActive(code.id, false, btn));
+        actions.append(btn);
+        item.append(actions);
+      }
+      root.append(item);
     });
-    document.getElementById("denied-signout").addEventListener("click", async () => {
-      await client.auth.signOut();
-      show("login");
-      setStatus("Use o endereço autorizado da organização.");
+  }
+  function renderNominations(nominations) {
+    const root = document.getElementById("nominations-list");
+    root.replaceChildren();
+    if (!nominations.length) { root.append(el("p", "empty", "Ainda não há indicações recebidas.")); return; }
+    nominations.forEach(n => {
+      const item = el("div", "rowitem");
+      item.append(el("strong", "", n.category_name + " · " + n.nominee_display_name));
+      item.append(el("p", "", "Perfil: " + n.nominee_nickname + " · Participante: " + (n.participant_label || "Não identificado")));
+      item.append(el("p", "", "Enviada: " + new Date(n.created_at).toLocaleString("pt-BR") + (n.updated_at !== n.created_at ? " · Editada: " + new Date(n.updated_at).toLocaleString("pt-BR") : "")));
+      root.append(item);
     });
-    // Do not call Supabase RPCs directly inside onAuthStateChange.
-    // Supabase Auth holds an internal lock during this callback; defer the
-    // authorization check until the callback has returned.
-    client.auth.onAuthStateChange((_event, session) => {
-      window.setTimeout(() => {
-        checkAccess(session);
-      }, 0);
+  }
+  function renderCategories(categories) {
+    const root = document.getElementById("categories-list");
+    root.replaceChildren();
+    categories.forEach(c => {
+      const item = el("div", "rowitem");
+      item.append(el("strong", "", c.name));
+      item.append(document.createTextNode(" "));
+      item.append(el("span", "pill " + (c.is_nominations_open ? "open" : "closed"), c.is_nominations_open ? "Indicações abertas" : "Indicações fechadas"));
+      root.append(item);
     });
-    client.auth.getSession().then(({ data: { session } }) => checkAccess(session));
-  </script>
+  }
+  function makeCode() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => alphabet[b & 31]).join("");
+  }
+  document.getElementById("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const email = document.getElementById("email").value.trim();
+    if (!email) return;
+    sendButton.disabled = true;
+    sendButton.textContent = "Enviando…";
+    setStatus(statusBox, "Solicitando seu link de acesso…");
+    const { error } = await client.auth.signInWithOtp({email, options:{emailRedirectTo:REDIRECT_URL,shouldCreateUser:false}});
+    setStatus(statusBox, error ? "Não foi possível enviar o link: " + error.message : "Solicitação enviada. Confira seu e-mail e a pasta de spam. O link é pessoal e de uso único.", error ? "error" : "success");
+    sendButton.disabled = false;
+    sendButton.textContent = "Enviar link de acesso";
+  });
+  document.getElementById("phase-button").addEventListener("click", async event => {
+    const isOpen = (dashboardData?.categories || []).some(c => c.is_nominations_open);
+    const next = !isOpen;
+    const message = next ? "Abrir as indicações para todas as categorias?" : "Fechar as indicações para todas as categorias? Participantes não poderão mais editar.";
+    if (!window.confirm(message)) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    const { error } = await client.rpc("admin_set_nominations_phase", {p_open:next});
+    button.disabled = false;
+    if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível alterar a fase: " + error.message, "error"); return; }
+    await loadDashboard();
+  });
+  document.getElementById("code-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    const label = document.getElementById("participant-label").value.trim();
+    if (!label) return;
+    const button = document.getElementById("create-code-button");
+    button.disabled = true;
+    const code = makeCode();
+    const { data, error } = await client.rpc("admin_create_nomination_code", {p_code:code,p_label:label});
+    button.disabled = false;
+    if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível criar o código: " + error.message, "error"); return; }
+    const reveal = document.getElementById("new-code");
+    reveal.replaceChildren(el("strong", "", "Código criado para " + data.label), el("code", "", code), el("p", "", "Copie agora e envie em mensagem privada. Por segurança, ele não será mostrado novamente."));
+    const copy = el("button", "secondary", "Copiar código");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(code); copy.textContent = "Copiado!"; }
+      catch { copy.textContent = "Selecione e copie o código acima"; }
+    });
+    reveal.append(copy);
+    reveal.classList.remove("hidden");
+    document.getElementById("participant-label").value = "";
+    await loadDashboard();
+  });
+  async function setCodeActive(id, active, button) {
+    if (!window.confirm("Desativar este código? Ele deixará de permitir novas indicações.")) return;
+    button.disabled = true;
+    const { error } = await client.rpc("admin_set_nomination_code_active", {p_code_id:id,p_active:active});
+    if (error) { button.disabled = false; setStatus(document.getElementById("dashboard-status"), "Não foi possível desativar o código: " + error.message, "error"); return; }
+    await loadDashboard();
+  }
+  document.getElementById("refresh-button").addEventListener("click", loadDashboard);
+  document.getElementById("signout-button").addEventListener("click", async () => { await client.auth.signOut(); show("login"); setStatus(statusBox, "Você saiu da área administrativa."); });
+  document.getElementById("denied-signout").addEventListener("click", async () => { await client.auth.signOut(); show("login"); setStatus(statusBox, "Use o endereço autorizado da organização."); });
+  client.auth.onAuthStateChange((_event, session) => { window.setTimeout(() => checkAccess(session), 0); });
+  client.auth.getSession().then(({data:{session}}) => checkAccess(session));
+</script>
 </body>
 </html>
