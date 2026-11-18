@@ -176,6 +176,29 @@
             nickInput.value = saved ? saved.nominee_nickname : "";
             nickInput.dataset.field = "nickname";
             card.append(nameLabel,nameInput,nickLabel,nickInput);
+            if (saved) {
+              const removeButton = makeField("button", "Remover minha indicação");
+              removeButton.type = "button";
+              removeButton.style.cssText = "margin-top:12px;background:transparent;border:1px solid rgba(255,150,180,.55);color:#ffc1d5;padding:9px 14px;border-radius:10px;cursor:pointer";
+              removeButton.addEventListener("click", async () => {
+                if (!window.confirm("Remover sua indicação da categoria \"" + category.name + "\"?")) return;
+                removeButton.disabled = true;
+                const {error} = await nominationClient.rpc("delete_my_award_nomination", {
+                  p_code:code,
+                  p_category_slug:category.slug
+                });
+                removeButton.disabled = false;
+                if (error) {
+                  setMessage(error.message || "Não foi possível remover a indicação.", "error");
+                  return;
+                }
+                nameInput.value = "";
+                nickInput.value = "";
+                removeButton.remove();
+                setMessage("Indicação removida da categoria " + category.name + ". Você ainda pode enviar outra enquanto a fase estiver aberta.", "success");
+              });
+              card.append(removeButton);
+            }
             fields.append(card);
           });
           access.classList.add("hidden");
@@ -211,7 +234,7 @@
             });
             if (error) throw error;
           }
-          setMessage("Indicações salvas! Você pode voltar com o mesmo código para editar ou substituir suas escolhas enquanto a fase estiver aberta.", "success");
+          setMessage("Indicações salvas! Você pode voltar com o mesmo código para editar, substituir ou remover suas escolhas enquanto a fase estiver aberta.", "success");
         } catch (error) {
           setMessage(error.message || "Não foi possível salvar as indicações.", "error");
         } finally {
