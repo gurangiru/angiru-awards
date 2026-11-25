@@ -183,7 +183,7 @@
     const { data, error } = await client.rpc("is_award_admin");
     if (error) {
       show("login");
-      setStatus(statusBox, "Não foi possível verificar a autorização. " + error.message, "error");
+      setStatus(statusBox, friendlyError(error, "Não foi possível verificar sua autorização. Tente entrar novamente."), "error");
       return;
     }
     if (data !== true) { show("denied"); return; }
@@ -196,7 +196,7 @@
     setStatus(box, "Atualizando informações…");
     const { data, error } = await client.rpc("admin_get_dashboard");
     if (error) {
-      setStatus(box, "Não foi possível carregar o painel: " + error.message, "error");
+      setStatus(box, friendlyError(error, "Não foi possível carregar o painel. Atualize a página."), "error");
       return;
     }
     dashboardData = data;
@@ -302,7 +302,7 @@
     const { data, error } = await client.rpc("admin_issue_participant_nomination_code", {p_participant_id:participant.id,p_code:code});
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("participant-status"), "Não foi possível gerar o código: " + error.message, "error");
+      setStatus(document.getElementById("participant-status"), friendlyError(error, "Não foi possível gerar o código de indicação."), "error");
       return;
     }
     const reveal = document.getElementById("new-code");
@@ -333,7 +333,7 @@
     const {data, error} = await client.rpc("admin_issue_participant_voter_code", {p_participant_id:participant.id,p_code:code});
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("participant-status"), "Não foi possível gerar o código de votação: " + error.message, "error");
+      setStatus(document.getElementById("participant-status"), friendlyError(error, "Não foi possível gerar o código de votação."), "error");
       return;
     }
     const reveal = document.getElementById("new-code");
@@ -439,7 +439,7 @@
     const { error } = await client.rpc("admin_set_award_participant_active", {p_participant_id:id,p_active:active});
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("participant-status"), "Não foi possível atualizar o participante: " + error.message, "error");
+      setStatus(document.getElementById("participant-status"), friendlyError(error, "Não foi possível atualizar o participante."), "error");
       return;
     }
     await loadDashboard();
@@ -490,7 +490,7 @@
     });
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("review-summary"), "Não foi possível registrar a revisão: " + error.message, "error");
+      setStatus(document.getElementById("review-summary"), friendlyError(error, "Não foi possível registrar a revisão da indicação."), "error");
       return;
     }
     await loadDashboard();
@@ -540,7 +540,7 @@
     sendButton.textContent = "Enviando…";
     setStatus(statusBox, "Solicitando seu link de acesso…");
     const { error } = await client.auth.signInWithOtp({email, options:{emailRedirectTo:REDIRECT_URL,shouldCreateUser:false}});
-    setStatus(statusBox, error ? "Não foi possível enviar o link: " + error.message : "Solicitação enviada. Confira seu e-mail e a pasta de spam. O link é pessoal e de uso único.", error ? "error" : "success");
+    setStatus(statusBox, error ? friendlyError(error, "Não foi possível enviar o link de acesso. Confira o e-mail e tente novamente.") : "Solicitação enviada. Confira seu e-mail e a pasta de spam. O link é pessoal e de uso único.", error ? "error" : "success");
     sendButton.disabled = false;
     sendButton.textContent = "Enviar link de acesso";
   });
@@ -553,7 +553,7 @@
     button.disabled = true;
     const { error } = await client.rpc("admin_set_nominations_phase", {p_open:next});
     button.disabled = false;
-    if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível alterar a fase: " + error.message, "error"); return; }
+    if (error) { setStatus(document.getElementById("dashboard-status"), friendlyError(error, "Não foi possível alterar a fase."), "error"); return; }
     await loadDashboard();
   });
   document.getElementById("voting-phase-button").addEventListener("click", async event => {
@@ -582,7 +582,7 @@
     const { error } = await client.rpc("admin_create_award_participant", {p_display_name:displayName,p_nickname:nickname});
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("participant-status"), "Não foi possível cadastrar: " + error.message, "error");
+      setStatus(document.getElementById("participant-status"), friendlyError(error, "Não foi possível cadastrar o participante. Confira os dados."), "error");
       return;
     }
     document.getElementById("participant-form").reset();
@@ -593,7 +593,7 @@
     if (!window.confirm("Desativar este código? Ele deixará de permitir novas indicações.")) return;
     button.disabled = true;
     const { error } = await client.rpc("admin_set_nomination_code_active", {p_code_id:id,p_active:active});
-    if (error) { button.disabled = false; setStatus(document.getElementById("dashboard-status"), "Não foi possível desativar o código: " + error.message, "error"); return; }
+    if (error) { button.disabled = false; setStatus(document.getElementById("dashboard-status"), friendlyError(error, "Não foi possível atualizar o código de indicação."), "error"); return; }
     await loadDashboard();
   }
   async function setVoterCodeActive(id, active, button) {
@@ -606,7 +606,7 @@
     const { error } = await client.rpc("admin_set_voter_code_active", {p_code_id:id,p_active:active});
     if (error) {
       button.disabled = false;
-      setStatus(document.getElementById("dashboard-status"), "Não foi possível " + action + " o código de votação: " + error.message, "error");
+      setStatus(document.getElementById("dashboard-status"), friendlyError(error, "Não foi possível atualizar o código de votação."), "error");
       return;
     }
     await loadDashboard();
@@ -618,7 +618,7 @@
     const { data, error } = await client.rpc("admin_publish_award_nominees");
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("publication-status"), "Não foi possível publicar: " + error.message, "error");
+      setStatus(document.getElementById("publication-status"), friendlyError(error, "Não foi possível publicar a lista oficial de candidatos."), "error");
       return;
     }
     setStatus(document.getElementById("publication-status"), data + " candidato(s) publicado(s).", "success");
