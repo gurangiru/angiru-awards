@@ -369,6 +369,12 @@
         el("span", "pill " + (code.is_active ? "open" : "closed"), code.is_active ? "Ativo" : "Desativado")
       );
       item.append(el("p", "", "Criado em " + new Date(code.created_at).toLocaleString("pt-BR")));
+      const actions = el("div", "actions");
+      const toggle = el("button", code.is_active ? "danger" : "secondary", code.is_active ? "Desativar código do participante" : "Reativar código");
+      toggle.type = "button";
+      toggle.addEventListener("click", () => setVoterCodeActive(code.id, !code.is_active, toggle));
+      actions.append(toggle);
+      item.append(actions);
       root.append(item);
     });
   }
@@ -588,6 +594,21 @@
     button.disabled = true;
     const { error } = await client.rpc("admin_set_nomination_code_active", {p_code_id:id,p_active:active});
     if (error) { button.disabled = false; setStatus(document.getElementById("dashboard-status"), "Não foi possível desativar o código: " + error.message, "error"); return; }
+    await loadDashboard();
+  }
+  async function setVoterCodeActive(id, active, button) {
+    const action = active ? "reativar" : "desativar";
+    const message = active
+      ? "Reativar este código de votação? Ele voltará a permitir novos votos, se a votação estiver aberta."
+      : "Desativar este código de votação? Ele deixará de permitir novos votos. Votos já registrados não serão apagados.";
+    if (!window.confirm(message)) return;
+    button.disabled = true;
+    const { error } = await client.rpc("admin_set_voter_code_active", {p_code_id:id,p_active:active});
+    if (error) {
+      button.disabled = false;
+      setStatus(document.getElementById("dashboard-status"), "Não foi possível " + action + " o código de votação: " + error.message, "error");
+      return;
+    }
     await loadDashboard();
   }
   document.getElementById("publish-nominees-button").addEventListener("click", async event => {
