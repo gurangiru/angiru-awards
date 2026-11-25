@@ -168,6 +168,21 @@
     deniedView.classList.toggle("hidden", view !== "denied");
     dashboardView.classList.toggle("hidden", view !== "dashboard");
   }
+
+  function friendlyError(error, fallback) {
+    const code = String(error?.code || "");
+    const message = String(error?.message || "").toLowerCase();
+    if (code === "23505" || message.includes("duplicate key") || message.includes("already exists")) return "Já existe um cadastro com esses dados. Confira o nickname e tente novamente.";
+    if (code === "42501" || message.includes("not authorized") || message.includes("permission denied")) return "Seu acesso não está autorizado a realizar esta ação. Entre novamente com a conta da organização.";
+    if (message.includes("rate limit") || message.includes("too many")) return "Muitas tentativas foram feitas em pouco tempo. Aguarde alguns minutos e tente novamente.";
+    if (message.includes("fase") && message.includes("fech")) return "A fase correspondente está fechada no momento.";
+    if (message.includes("pending") || message.includes("pendente")) return "Ainda existem indicações pendentes. Conclua a revisão antes de continuar.";
+    if (message.includes("voting") || message.includes("votação") || message.includes("vote")) return "Não foi possível realizar esta ação na etapa atual da votação. Confira o estado da fase.";
+    if (message.includes("inactive") || message.includes("inativo") || message.includes("ineleg")) return "O participante ou código não está habilitado para esta ação.";
+    if (message.includes("network") || message.includes("fetch")) return "Não foi possível conectar ao serviço. Verifique sua internet e tente novamente.";
+    return fallback || "Não foi possível concluir a operação. Tente novamente. Se o problema persistir, atualize o painel.";
+  }
+
   function setStatus(element, message, kind) {
     element.textContent = message;
     element.className = "status" + (kind ? " " + kind : "");
@@ -568,7 +583,7 @@
     const {error} = await client.rpc("admin_set_voting_phase", {p_open:next});
     button.disabled = false;
     if (error) {
-      setStatus(document.getElementById("voting-phase-status"), "Não foi possível alterar a fase: " + error.message, "error");
+      setStatus(document.getElementById("voting-phase-status"), friendlyError(error, "Não foi possível alterar a fase da votação."), "error");
       return;
     }
     await loadDashboard();
