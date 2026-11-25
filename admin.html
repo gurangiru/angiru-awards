@@ -427,7 +427,7 @@
   }
 
   async function setParticipantActive(id, active, button) {
-    const message = active ? "Reativar este participante?" : "Marcar este participante como inelegível? O código de indicação vinculado será desativado.";
+    const message = active ? "Reativar este participante?" : "Marcar este participante como inelegível? Os códigos de indicação e de votação vinculados serão desativados.";
     if (!window.confirm(message)) return;
     button.disabled = true;
     const { error } = await client.rpc("admin_set_award_participant_active", {p_participant_id:id,p_active:active});
