@@ -77,7 +77,7 @@
       <div class="eyebrow">Uma celebração da nossa comunidade</div>
       <h1>Quem é quem <span>no Angiru?</span></h1>
       <p class="intro">Chegou a hora de celebrar as personalidades, as histórias e aquelas figuras inesquecíveis que dão vida à comunidade!</p>
-      <div class="notice">✧ Prévia do projeto · votação ainda não aberta</div>
+      <div class="notice" id="phase-notice">✧ Uma celebração da comunidade · participe por etapas</div>
     </section>
     <section>
       <div class="section-head"><h2>As categorias</h2><p>Algumas das categorias que vão animar a premiação.</p></div>
@@ -376,6 +376,8 @@
           if (!error && data && data.length) {
             section.classList.remove("hidden");
             message(status, "A votação está aberta! Insira seu código individual para começar.", "");
+            const notice = document.getElementById("phase-notice");
+            if (notice) notice.textContent = "✧ Votação aberta · participe com seu código individual";
           }
         } catch (error) { console.error(error); }
       }
