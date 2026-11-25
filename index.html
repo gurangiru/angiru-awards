@@ -55,6 +55,8 @@
     .vote-result-category:last-child{border-bottom:0}
     .vote-result-row{display:flex;justify-content:space-between;gap:14px;padding:7px 0;color:var(--muted)}
     .vote-result-row strong{color:#fff}
+    .nomination-panel input:focus-visible,.voting-panel input:focus-visible,.nomination-panel button:focus-visible,.voting-panel button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+    .nomination-panel button:disabled,.voting-panel button:disabled{cursor:not-allowed}
 
     .emoji{font-size:1.8rem;display:block;margin-bottom:10px}
     .category h3{margin:0 0 5px;font-size:1.08rem}
@@ -201,10 +203,16 @@
             const saved = previous.find(n => n.category_slug === category.slug);
             const card = document.createElement("div");
             card.className = "nomination-form-card";
-            card.append(makeField("h3", category.name));
+            const heading = makeField("h3", category.name);
+            heading.id = "nomination-category-" + category.slug;
+            card.setAttribute("role", "group");
+            card.setAttribute("aria-labelledby", heading.id);
+            card.append(heading);
             if (category.description) card.append(makeField("p", category.description));
             const nameLabel = makeField("label", "Nome de exibição");
             const nameInput = document.createElement("input");
+            nameInput.id = "nomination-name-" + category.slug;
+            nameLabel.htmlFor = nameInput.id;
             nameInput.type = "text";
             nameInput.maxLength = 100;
             nameInput.required = false;
@@ -214,6 +222,8 @@
             nameInput.dataset.field = "name";
             const nickLabel = makeField("label", "Nickname do Angiru");
             const nickInput = document.createElement("input");
+            nickInput.id = "nomination-nickname-" + category.slug;
+            nickLabel.htmlFor = nickInput.id;
             nickInput.type = "text";
             nickInput.maxLength = 40;
             nickInput.required = false;
@@ -424,10 +434,16 @@
           categories.forEach(category => {
             const card = node("div");
             card.className = "vote-category";
-            card.append(node("h3", category.name));
+            const heading = node("h3", category.name);
+            heading.id = "vote-category-" + category.slug;
+            card.setAttribute("role", "group");
+            card.setAttribute("aria-labelledby", heading.id);
+            card.append(heading);
             if (category.description) card.append(node("p", category.description));
             const cardStatus = node("p");
             cardStatus.className = "vote-category-status";
+            cardStatus.setAttribute("role", "status");
+            cardStatus.setAttribute("aria-live", "polite");
 
             if (voted.includes(category.slug)) {
               cardStatus.textContent = "✓ Seu voto nesta categoria já foi registrado.";
