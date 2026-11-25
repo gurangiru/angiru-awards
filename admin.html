@@ -449,7 +449,9 @@
   }
 
   async function setParticipantActive(id, active, button) {
-    const message = active ? "Reativar este participante?" : "Marcar este participante como inelegível? Os códigos de indicação e de votação vinculados serão desativados.";
+    const message = active
+      ? "Reativar este participante? Os códigos de indicação e votação continuarão desativados e precisarão ser gerados novamente."
+      : "Marcar este participante como inelegível? Os códigos de indicação e de votação vinculados serão desativados.";
     if (!window.confirm(message)) return;
     button.disabled = true;
     const { error } = await client.rpc("admin_set_award_participant_active", {p_participant_id:id,p_active:active});
@@ -459,6 +461,13 @@
       return;
     }
     await loadDashboard();
+    setStatus(
+      document.getElementById("participant-status"),
+      active
+        ? "Participante reativado. Gere novamente os códigos individuais que ele deverá utilizar."
+        : "Participante marcado como inelegível. Os códigos de indicação e votação vinculados foram desativados.",
+      "success"
+    );
   }
   function renderNominations(nominations, categories) {
     const root = document.getElementById("nominations-list");
@@ -499,7 +508,7 @@
   }
   async function reviewNomination(nomination, decision, button) {
     const verb = decision === "approved" ? "aprovar" : "rejeitar";
-    if (!window.confirm("Deseja " + verb + " a indicação de " + nomination.nominee_display_name + " em " + nomination.category_name + "?")) return;
+    if (!window.confirm("Deseja " + verb + " a indicação de " + nomination.nominee_display_name + " em " + nomination.category_name + "? Esta decisão não poderá ser alterada pelo painel.")) return;
     button.disabled = true;
     const { error } = await client.rpc("admin_review_award_nomination", {
       p_nomination_id: nomination.id, p_decision: decision, p_note: null
@@ -510,6 +519,7 @@
       return;
     }
     await loadDashboard();
+    setStatus(document.getElementById("dashboard-status"), "Revisão registrada com sucesso.", "success");
   }
   function renderNominees(nominees) {
     const root = document.getElementById("nominees-list");
