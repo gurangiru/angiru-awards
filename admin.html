@@ -86,6 +86,13 @@
     </section>
 
     <section class="card">
+      <div class="topline"><h2>Fase de votação</h2><span id="voting-phase-pill" class="pill closed">Não iniciada</span></div>
+      <p class="intro" style="text-align:left;margin:0 0 12px">A votação só poderá ser aberta depois que as indicações forem encerradas, todas forem revisadas, a lista oficial for publicada e cada participante elegível tiver seu código individual de votação.</p>
+      <button id="voting-phase-button" class="full" type="button">Abrir votação</button>
+      <div id="voting-phase-status" class="status" role="status" aria-live="polite">A votação ainda não foi iniciada.</div>
+    </section>
+
+    <section class="card">
       <h2>Cadastro de participantes elegíveis</h2>
       <p class="intro" style="text-align:left;margin-bottom:12px">Cadastre somente membros do Putoverso. O nome de exibição será usado nos registros; o nickname identifica o perfil no Angiru. Cada nickname poderá ser cadastrado uma única vez.</p>
       <form id="participant-form">
@@ -95,7 +102,7 @@
         <input id="participant-nickname" maxlength="100" placeholder="Ex.: mavisvamp" required>
         <button id="create-participant-button" class="full" type="submit">Cadastrar participante</button>
       </form>
-      <div id="participant-status" class="status" role="status" aria-live="polite">O cadastro não abre as indicações. Você poderá gerar o código individual de cada pessoa depois.</div>
+      <div id="participant-status" class="status" role="status" aria-live="polite">O cadastro não abre as fases. Depois, gere separadamente os códigos de indicação e de votação de cada participante.</div>
       <div id="participants-list"></div>
       <div id="new-code" class="code-reveal hidden" aria-live="polite"></div>
     </section>
@@ -104,6 +111,12 @@
       <h2>Códigos individuais de indicação</h2>
       <p class="intro" style="text-align:left;margin-bottom:8px">Os códigos ficam vinculados ao cadastro do participante. O código completo só aparece no momento da criação ou reemissão.</p>
       <div id="codes-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Códigos individuais de votação</h2>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Cada participante recebe um código diferente do código de indicação. O código completo aparece apenas ao gerar ou reemitir e não poderá ser reemitido depois que a votação começar.</p>
+      <div id="voter-codes-list"></div>
     </section>
 
     <section class="card">
@@ -119,6 +132,12 @@
       <div id="nominees-list"></div>
       <button id="publish-nominees-button" class="full" type="button">Publicar lista oficial de candidatos</button>
       <div id="publication-status" class="status" role="status" aria-live="polite">A lista ainda não foi publicada.</div>
+    </section>
+
+    <section id="voting-results-card" class="card hidden">
+      <h2>Apuração oficial</h2>
+      <p class="intro" style="text-align:left;margin-bottom:8px">Resultados agregados liberados após o encerramento. As escolhas individuais permanecem privadas.</p>
+      <div id="voting-results-list"></div>
     </section>
 
     <section class="card">
@@ -188,19 +207,27 @@
     const categories = data.categories || [];
     const nominations = data.nominations || [];
     const codes = data.nomination_codes || [];
+    const voterCodes = data.voter_codes || [];
+    const participants = data.participants || [];
+    const votingState = data.voting_state || {};
     const isOpen = categories.some(c => c.is_nominations_open);
     const activeCodes = codes.filter(c => c.is_active).length;
+    const activeVoterCodes = voterCodes.filter(c => c.is_active).length;
     document.getElementById("summary").replaceChildren(
       metric("Categorias", categories.length),
       metric("Indicações recebidas", nominations.length),
-      metric("Códigos ativos", activeCodes)
+      metric("Códigos de indicação", activeCodes),
+      metric("Códigos de votação", activeVoterCodes)
     );
     const phasePill = document.getElementById("phase-pill");
     phasePill.textContent = isOpen ? "Aberta" : "Fechada";
     phasePill.className = "pill " + (isOpen ? "open" : "closed");
     document.getElementById("phase-button").textContent = isOpen ? "Fechar fase de indicações" : "Abrir fase de indicações";
     renderCodes(codes);
-    renderParticipants(data.participants || []);
+    renderVoterCodes(voterCodes);
+    renderParticipants(participants);
+    renderVotingPhase(votingState, categories, nominations, participants, data.nominees || [], voterCodes);
+    renderVotingResults(data.voting_results || [], votingState);
     renderNominations(nominations, categories);
     renderNominees(data.nominees || []);
     const pendingReviews = nominations.filter(n => n.review_status === "pending").length;
@@ -248,10 +275,15 @@
       item.append(el("p", "", "Perfil: angiru.com.py/profiles/" + p.nickname + "/"));
       const actions = el("div", "actions");
       if (p.is_active) {
-        const issue = el("button", "secondary", p.has_nomination_code ? "Reemitir código (invalida o anterior)" : "Gerar código de indicação");
+        const issue = el("button", "secondary", p.has_nomination_code ? "Reemitir código de indicação" : "Gerar código de indicação");
         issue.type = "button";
         issue.addEventListener("click", () => issueParticipantCode(p, issue));
         actions.append(issue);
+        const voterIssue = el("button", "secondary", p.has_voter_code ? "Reemitir código de votação" : "Gerar código de votação");
+        voterIssue.type = "button";
+        voterIssue.disabled = Boolean(dashboardData?.voting_state?.started_at);
+        voterIssue.addEventListener("click", () => issueParticipantVoterCode(p, voterIssue));
+        actions.append(voterIssue);
       }
       const toggle = el("button", p.is_active ? "danger" : "secondary", p.is_active ? "Marcar como inelegível" : "Reativar participante");
       toggle.type = "button";
@@ -286,6 +318,114 @@
     setStatus(document.getElementById("participant-status"), "Código individual gerado. Lembre-se de copiá-lo agora.", "success");
     await loadDashboard();
   }
+  async function issueParticipantVoterCode(participant, button) {
+    const existing = participant.has_voter_code;
+    if (dashboardData?.voting_state?.started_at) {
+      setStatus(document.getElementById("participant-status"), "Não é permitido gerar ou reemitir códigos depois que a votação começa.", "error");
+      return;
+    }
+    const prompt = existing
+      ? "Reemitir o código de votação de " + participant.display_name + "? O código anterior deixará de funcionar."
+      : "Gerar o código individual de votação de " + participant.display_name + "?";
+    if (!window.confirm(prompt)) return;
+    button.disabled = true;
+    const code = makeCode();
+    const {data, error} = await client.rpc("admin_issue_participant_voter_code", {p_participant_id:participant.id,p_code:code});
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("participant-status"), "Não foi possível gerar o código de votação: " + error.message, "error");
+      return;
+    }
+    const reveal = document.getElementById("new-code");
+    reveal.replaceChildren(
+      el("strong", "", "Código de votação criado para " + data.label),
+      el("code", "", code),
+      el("p", "", "Copie agora e envie em mensagem privada. Este código é separado do código de indicação e não será exibido novamente.")
+    );
+    const copy = el("button", "secondary", "Copiar código");
+    copy.type = "button";
+    copy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(code); copy.textContent = "Copiado!"; }
+      catch { copy.textContent = "Selecione e copie o código acima"; }
+    });
+    reveal.append(copy);
+    reveal.classList.remove("hidden");
+    setStatus(document.getElementById("participant-status"), "Código individual de votação gerado. Lembre-se de copiá-lo agora.", "success");
+    await loadDashboard();
+  }
+
+  function renderVoterCodes(codes) {
+    const root = document.getElementById("voter-codes-list");
+    root.replaceChildren();
+    if (!codes.length) {
+      root.append(el("p", "empty", "Nenhum código de votação criado ainda."));
+      return;
+    }
+    codes.forEach(code => {
+      const item = el("div", "rowitem");
+      item.append(
+        el("strong", "", code.label || "Participante sem identificação"),
+        document.createTextNode(" "),
+        el("span", "pill " + (code.is_active ? "open" : "closed"), code.is_active ? "Ativo" : "Desativado")
+      );
+      item.append(el("p", "", "Criado em " + new Date(code.created_at).toLocaleString("pt-BR")));
+      root.append(item);
+    });
+  }
+
+  function renderVotingPhase(state, categories, nominations, participants, nominees, voterCodes) {
+    const started = Boolean(state.started_at);
+    const closed = Boolean(state.closed_at);
+    const open = started && !closed;
+    const pill = document.getElementById("voting-phase-pill");
+    const button = document.getElementById("voting-phase-button");
+    const status = document.getElementById("voting-phase-status");
+    pill.textContent = open ? "Aberta" : closed ? "Encerrada" : "Não iniciada";
+    pill.className = "pill " + (open ? "open" : "closed");
+    button.textContent = open ? "Encerrar votação" : closed ? "Votação encerrada" : "Abrir votação";
+    button.disabled = closed;
+    if (closed) {
+      setStatus(status, "Votação encerrada em " + new Date(state.closed_at).toLocaleString("pt-BR") + ". Os resultados oficiais estão disponíveis abaixo.", "success");
+      return;
+    }
+    if (open) {
+      setStatus(status, "Votação aberta desde " + new Date(state.started_at).toLocaleString("pt-BR") + ". Participantes já podem registrar seus votos.", "success");
+      return;
+    }
+    const pending = nominations.filter(n => n.review_status === "pending").length;
+    const activeParticipants = participants.filter(p => p.is_active);
+    const missingCodes = activeParticipants.filter(p => !p.has_voter_code).length;
+    const published = nominees.filter(n => n.is_active && n.is_published).length;
+    const nominationsOpen = categories.some(c => c.is_nominations_open);
+    const ready = !nominationsOpen && pending === 0 && published > 0 && activeParticipants.length > 0 && missingCodes === 0;
+    button.disabled = !ready;
+    if (nominationsOpen) setStatus(status, "Feche a fase de indicações antes de abrir a votação.");
+    else if (pending) setStatus(status, "Ainda existem " + pending + " indicação(ões) pendente(s) de revisão.");
+    else if (!published) setStatus(status, "Publique os candidatos oficiais antes de abrir a votação.");
+    else if (!activeParticipants.length) setStatus(status, "Cadastre e habilite os participantes elegíveis.");
+    else if (missingCodes) setStatus(status, "Gere os códigos de votação de " + missingCodes + " participante(s) elegível(is).");
+    else setStatus(status, "Tudo pronto! Você já pode abrir a votação.");
+  }
+
+  function renderVotingResults(results, state) {
+    const card = document.getElementById("voting-results-card");
+    const root = document.getElementById("voting-results-list");
+    root.replaceChildren();
+    if (!state.closed_at || !results.length) return;
+    const grouped = new Map();
+    results.forEach(row => {
+      if (!grouped.has(row.category_slug)) grouped.set(row.category_slug, {name:row.category_name, rows:[]});
+      grouped.get(row.category_slug).rows.push(row);
+    });
+    grouped.forEach(group => {
+      const item = el("div", "rowitem");
+      item.append(el("h3", "", group.name));
+      group.rows.forEach(row => item.append(el("p", "", row.nominee_name + " — " + row.vote_count + (row.vote_count === 1 ? " voto" : " votos"))));
+      root.append(item);
+    });
+    card.classList.remove("hidden");
+  }
+
   async function setParticipantActive(id, active, button) {
     const message = active ? "Reativar este participante?" : "Marcar este participante como inelegível? O código de indicação vinculado será desativado.";
     if (!window.confirm(message)) return;
@@ -408,6 +548,23 @@
     const { error } = await client.rpc("admin_set_nominations_phase", {p_open:next});
     button.disabled = false;
     if (error) { setStatus(document.getElementById("dashboard-status"), "Não foi possível alterar a fase: " + error.message, "error"); return; }
+    await loadDashboard();
+  });
+  document.getElementById("voting-phase-button").addEventListener("click", async event => {
+    const state = dashboardData?.voting_state || {};
+    const next = !(state.started_at && !state.closed_at);
+    const prompt = next
+      ? "Abrir a votação para todos os participantes elegíveis? Depois de iniciada, nenhum código de votação poderá ser reemitido."
+      : "Encerrar oficialmente a votação? Depois disso, nenhum novo voto será aceito e a apuração será liberada.";
+    if (!window.confirm(prompt)) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    const {error} = await client.rpc("admin_set_voting_phase", {p_open:next});
+    button.disabled = false;
+    if (error) {
+      setStatus(document.getElementById("voting-phase-status"), "Não foi possível alterar a fase: " + error.message, "error");
+      return;
+    }
     await loadDashboard();
   });
   document.getElementById("participant-form").addEventListener("submit", async event => {
