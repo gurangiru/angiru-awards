@@ -490,7 +490,7 @@
           form.classList.remove("hidden");
           message(status, "Código confirmado. Você pode votar nas categorias disponíveis. Cada categoria aceita apenas um voto por código.", "success");
         } catch (error) {
-          message(status, error.message || "Não foi possível validar o código.", "error");
+          message(status, friendlyError(error, "Não foi possível validar seu código de votação. Confira os dados e tente novamente."), "error");
         } finally { loadButton.disabled = false; }
       }
 
